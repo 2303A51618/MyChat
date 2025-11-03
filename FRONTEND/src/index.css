@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Section card utility: subtle colored left border + shadow to separate dashboard sections */
+.section-card {
+	@apply shadow-sm bg-white; /* small shadow */
+	/* left border color tuned to primary/green - change as needed */
+	box-shadow: 0 1px 4px rgba(16,24,40,0.06);
+	border-left: 4px solid rgba(34,197,94,0.12);
+}
