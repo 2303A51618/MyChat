@@ -23,8 +23,14 @@ const __dirname = path.resolve();
 
 app.use(cookieParser());
 app.use(
+  // allow FRONTEND_URL (set in Render) or default to localhost dev port
+  // FRONTEND_URL may be a single origin or a comma-separated list of origins
   cors({
-    origin: "http://localhost:5173",
+    origin: (() => {
+      const cfg = process.env.FRONTEND_URL || "http://localhost:5173";
+      if (cfg.includes(",")) return cfg.split(",").map((s) => s.trim());
+      return cfg;
+    })(),
     credentials: true,
   })
 );
