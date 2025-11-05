@@ -277,7 +277,7 @@ useEffect(() => {
           <div
           key={user._id}
           onClick={() => setSelectedUser(user)}         
-            className={"w-full rounded-lg h-[65px] flex items-center gap-4 border mt-3 pl-[10px] hover:bg-gray-100 transition-all duration-200"}
+            className={`w-full rounded-lg h-[65px] flex items-center gap-4 border mt-3 pl-[10px] transition-all duration-200 ${user?.hasUnread ? 'bg-indigo-50 hover:bg-indigo-100' : 'hover:bg-gray-100'}`}
           >
             {/* Checkbox when delete mode is active */}
             {isDeleteMode && (
@@ -308,10 +308,12 @@ useEffect(() => {
                 <p className="text-gray-500">
                   {(onlineUsers || []).includes(user._id) ? "Online" : "offline"}
                 </p>
-               
-        
               </div>
-              
+              <div className="flex items-center gap-3">
+                {user?.unreadCount > 0 && (
+                  <div className="w-3 h-3 rounded-full bg-red-500" title={`${user.unreadCount} unread`} />
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -347,7 +349,7 @@ useEffect(() => {
           <Link to="/chatpage"
           key={user._id}           onClick={() => setSelectedUser(user)}
 
-            className={`w-full rounded-lg h-[65px] flex items-center gap-4 border mt-3 pl-[10px] hover:bg-gray-100 transition-all duration-200`}
+            className={`relative w-full rounded-lg h-[65px] flex items-center gap-4 border mt-3 pl-[10px] transition-all duration-200 ${user?.hasUnread ? 'bg-indigo-50 hover:bg-indigo-100' : 'hover:bg-gray-100'}`}
           >
 
             {/* Checkbox when delete mode is active */}
@@ -380,6 +382,9 @@ useEffect(() => {
                 <p className="text-gray-500">
                   {(onlineUsers || []).includes(user._id) ? "Online" : "offline"}
                 </p>
+              </div>
+              <div className="absolute right-4 top-4">
+                {user?.unreadCount > 0 && <div className="w-3 h-3 rounded-full bg-red-500" />}
               </div>
             </div>
           </Link>

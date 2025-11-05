@@ -41,6 +41,15 @@ const userSchema = new mongoose.Schema({
             },
       deletedChats: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // <-- new field
 
+            // Device tokens for push notifications (FCM/APNS)
+            deviceTokens: [{ token: String, platform: String }],
+
+            // Moderation fields
+            mutedUntil: { type: Date, default: null },
+            banned: { type: Boolean, default: false },
+            // Global admin flag for moderation APIs (use sparingly)
+            isGlobalAdmin: { type: Boolean, default: false },
+
       // Friends and friend request tracking
       friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
       pendingSent: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

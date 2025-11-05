@@ -9,7 +9,11 @@ import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import mediaRoutes from "./routes/media.route.js";
 import groupRoutes from "./routes/group.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 import userRoutes from "./routes/user.route.js";
+import moderationRoutes from './routes/moderation.route.js';
+import analyticsRoutes from './routes/analytics.route.js';
+import { startAnalyticsCron } from './lib/analytics.js';
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
@@ -31,7 +35,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
+app.use('/api/moderation', moderationRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
+// start analytics cron if configured
+try { startAnalyticsCron(); } catch (err) { console.debug('analytics cron not started', err); }
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../FRONTEND/dist")));

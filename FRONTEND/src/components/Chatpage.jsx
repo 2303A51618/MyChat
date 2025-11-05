@@ -1,5 +1,6 @@
 import React from "react";
 import { useEffect,useRef,useState } from "react";
+import { useParams, useNavigate } from 'react-router-dom';
 import { formatMessageTime } from "../lib/utils";
 import { useChatStore } from "../Store/useChatStore";
 import { useAuthStore } from "../Store/useAuthStore";
@@ -13,6 +14,8 @@ import useDebounce from "../lib/useDebounce";
 const Chatpage = () => {
   const { selectedUser } = useChatStore();
   const setSelectedUser = useChatStore((s) => s.setSelectedUser);
+  const params = useParams();
+  const navigate = useNavigate();
     const { onlineUsers } = useAuthStore();
     const [showName, setShowName]=useState(false);
 const [showImage,setShowImage]=useState(false);
@@ -86,6 +89,27 @@ const [showImage,setShowImage]=useState(false);
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // If route contains group id, fetch group details and open it
+  useEffect(() => {
+    const id = params?.id;
+    if (!id) return;
+    // avoid reloading if selectedUser is already set to this group
+    if (selectedUser && (String(selectedUser._id) === String(id) || (selectedUser.isGroup && String(selectedUser._id) === String(id)))) return;
+    (async () => {
+      try {
+        const res = await axiosInstance.get(`/groups/${encodeURIComponent(id)}`);
+        const g = res.data && (res.data.group || res.data) ? (res.data.group || res.data) : null;
+        if (!g) return;
+        const groupObj = { _id: g._id || g.id, fullName: g.name, isGroup: true, name: g.name, rawGroup: g };
+        await setSelectedUser(groupObj);
+      } catch (err) {
+        console.error('Failed to open group from route', err);
+        // if group not found, navigate back to home
+        navigate('/');
+      }
+    })();
+  }, [params?.id, navigate, selectedUser, setSelectedUser]);
 
   useEffect(() => {
     const q = debouncedQ?.trim();

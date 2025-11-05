@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import Group from "../models/group.model.js";
 import mongoose from "mongoose";
 import cloudinary from "../lib/cloudinary.js";
 import { compressBase64Image } from '../lib/imageUtils.js';
@@ -30,6 +31,13 @@ export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
+
+    // if the id corresponds to a group -> return group messages
+    const maybeGroup = await Group.findById(userToChatId).select('_id');
+    if (maybeGroup) {
+      const messages = await Message.find({ chatId: userToChatId, isGroup: true }).sort({ createdAt: 1 });
+      return res.status(200).json(messages);
+    }
 
     // For backwards-compatible 1:1 chats we saved chatId as the other user's id
     const messages = await Message.find({
@@ -68,7 +76,31 @@ export const sendMessage = async (req, res) => {
       }
     }
 
-    // enforce block / friendship rules
+    // Check if receiverId is a group id
+    const maybeGroup = await Group.findById(receiverId).select('members');
+    if (maybeGroup) {
+      // ensure sender is a member
+      const isMember = Array.isArray(maybeGroup.members) && maybeGroup.members.some(m => String(m) === String(senderId));
+      if (!isMember) return res.status(403).json({ message: 'You are not a member of this group' });
+
+      const newMessage = new Message({
+        sender: senderId,
+        chatId: receiverId,
+        isGroup: true,
+        content: text || '',
+        attachments,
+        status: 'sent',
+      });
+
+      await newMessage.save();
+
+      // emit to the group's room
+      io.to(`room:${receiverId}`).emit('newMessage', newMessage);
+
+      return res.status(201).json(newMessage);
+    }
+
+    // enforce block / friendship rules for 1:1
     const [senderUser, receiverUser] = await Promise.all([
       User.findById(senderId),
       User.findById(receiverId),
@@ -99,8 +131,10 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage controller: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error in sendMessage controller: ", error);
+    // return error message to client when possible to aid debugging
+    const msg = (error && error.message) ? error.message : 'Internal server error';
+    res.status(500).json({ message: msg });
   }}
 
   export const deleteChats = async (req, res) => {
@@ -139,44 +173,18 @@ export const sendMessage = async (req, res) => {
       
       console.log("Delete filters:", deleteFilters);
       
-      // Delete messages entirely
-      console.log("About to delete messages...");
-      const deleteResult = await Message.deleteMany({ $or: deleteFilters });
-      console.log("Delete result:", deleteResult);
-      
-      // Update logged-in user's deletedChats (soft delete for them)
-      console.log("About to update logged-in user...");
+      // Soft-delete the chats for the requesting user by storing the deleted user ids
       await User.findByIdAndUpdate(loggedInUserId, {
         $addToSet: { deletedChats: { $each: validUserIds } }
       });
-      
-      // Permanently delete each other user
-      const deletedUsers = [];
-      for (const userId of validUserIds) {
-        console.log(`🔄 Attempting to permanently delete user ${userId}...`);
-        try {
-          const deletedUser = await User.findByIdAndDelete(userId);
-          if (deletedUser) {
-            console.log(`✅ User ${userId} deleted successfully:`, deletedUser.fullName || deletedUser.email);
-            deletedUsers.push(userId);
-          } else {
-            console.log(`❌ User ${userId} not found (already deleted?)`);
-          }
-        } catch (deleteError) {
-          console.error(`❌ Error deleting user ${userId}:`, deleteError.message);
-          // Continue to next user instead of crashing
-        }
-      }
-      
-      // Emit real-time updates
-      // notify the requesting user (all their sockets) about deleted chats
-      io.to(`user:${loggedInUserId}`).emit("chatsDeleted", { deletedUserIds: deletedUsers });
-      
+
+      // Emit real-time updates to the requesting user's sockets so UI can update
+      io.to(`user:${loggedInUserId}`).emit("chatsDeleted", { deletedUserIds: validUserIds });
+
       res.status(200).json({
         success: true,
-        message: `Chats deleted. Users permanently deleted: ${deletedUsers.length}`,
-        deletedUserIds: deletedUsers,
-        deletedMessagesCount: deleteResult.deletedCount,
+        message: `Chats removed from your view`,
+        deletedUserIds: validUserIds,
       });
     } catch (error) {
       console.error("❌ Full error:", error.stack);
