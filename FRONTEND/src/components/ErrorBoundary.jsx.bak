@@ -12,13 +12,13 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    
-    
+    // log to console and show toast so developer can see it
+    // keep minimal UI instead of blank page
     console.error('Unhandled error caught by ErrorBoundary:', error, info);
     try {
       toast.error(`App error: ${error?.message || 'Unknown'}`);
     } catch {
-      
+      // ignore toast errors in environments without DOM
     }
     this.setState({ info });
   }

@@ -43,7 +43,7 @@ const OtpVerify = ({ email, onCancel }) => {
       await axiosInstance.post('/auth/verify-otp', { email, otp });
       setSuccess(true);
       toast.success('Verified — welcome!');
-      
+      // refresh auth state and redirect
       await checkAuth();
       setTimeout(()=>{
         navigate('/');

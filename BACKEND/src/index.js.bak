@@ -13,7 +13,6 @@ import notificationRoutes from "./routes/notification.route.js";
 import userRoutes from "./routes/user.route.js";
 import moderationRoutes from './routes/moderation.route.js';
 import analyticsRoutes from './routes/analytics.route.js';
-import healthRoutes from './routes/health.route.js';
 import { startAnalyticsCron } from './lib/analytics.js';
 import { app, server } from "./lib/socket.js";
 
@@ -46,7 +45,6 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/health', healthRoutes);
 
 // start analytics cron if configured
 try { startAnalyticsCron(); } catch (err) { console.debug('analytics cron not started', err); }
