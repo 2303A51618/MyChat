@@ -24,15 +24,27 @@ const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
 app.use(cookieParser());
+// Resolve allowed origins from FRONTEND_URL env (supports comma-separated list)
+const resolveAllowedOrigins = () => {
+  const cfg = process.env.FRONTEND_URL || "http://localhost:5173";
+  if (!cfg) return [];
+  if (cfg.includes(",")) return cfg.split(",").map((s) => s.trim()).filter(Boolean);
+  return [cfg.trim()];
+};
+
+const allowedOrigins = resolveAllowedOrigins();
+console.log("Allowed frontend origins:", allowedOrigins);
+
 app.use(
-  // allow FRONTEND_URL (set in Render) or default to localhost dev port
-  // FRONTEND_URL may be a single origin or a comma-separated list of origins
   cors({
-    origin: (() => {
-      const cfg = process.env.FRONTEND_URL || "http://localhost:5173";
-      if (cfg.includes(",")) return cfg.split(",").map((s) => s.trim());
-      return cfg;
-    })(),
+    origin: function (origin, callback) {
+      // allow non-browser requests with no origin (curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.length === 0) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // not allowed
+      return callback(new Error("CORS: origin not allowed"), false);
+    },
     credentials: true,
   })
 );

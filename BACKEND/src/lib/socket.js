@@ -7,15 +7,19 @@ const app = express();
 const server = http.createServer(app);
 
 // Allow origins configured via FRONTEND_URL (comma-separated) or default to localhost during dev
-const allowedOrigins = (() => {
-    const cfg = process.env.FRONTEND_URL || "http://localhost:5173";
-    if (cfg.includes(",")) return cfg.split(",").map(s => s.trim());
-    return cfg;
-})();
+const cfg = process.env.FRONTEND_URL || "http://localhost:5173";
+const allowedOrigins = cfg ? (cfg.includes(",") ? cfg.split(",").map(s => s.trim()).filter(Boolean) : [cfg.trim()]) : [];
+console.log("Socket allowed origins:", allowedOrigins);
 
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: function (origin, callback) {
+            // allow non-browser or same-origin
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.length === 0) return callback(null, true);
+            if (allowedOrigins.includes(origin)) return callback(null, true);
+            return callback(new Error('CORS error: origin not allowed'), false);
+        },
         methods: ["GET", "POST"],
         credentials: true,
     },
