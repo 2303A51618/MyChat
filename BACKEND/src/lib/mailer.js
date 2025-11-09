@@ -20,6 +20,14 @@ async function createTransporter() {
     }
 
     const transporter = nodemailer.createTransport(transportOptions);
+    // verify transporter connectivity early to fail fast and provide clearer logs
+    try {
+      await transporter.verify();
+      console.log('[mailer] transporter verified and ready');
+    } catch (verifyErr) {
+      console.warn('[mailer] transporter verification failed:', verifyErr && verifyErr.message);
+      // still return transporter so runtime send attempts can show real errors
+    }
 
     cachedTransporter = transporter;
     return cachedTransporter;
@@ -56,10 +64,16 @@ export const sendOtpEmail = async (to, otp) => {
   }
 
   try {
-    return transporter.sendMail(msg);
+    const res = await transporter.sendMail(msg);
+    console.log('[mailer] sent email to', to);
+    return res;
   } catch (err) {
     console.error('[mailer] failed to send email:', err);
+    // Provide richer guidance for common connectivity errors
+    if (err && err.code === 'ETIMEDOUT') {
+      console.error('[mailer] connection timed out. Possible causes: wrong SMTP host/port, network egress blocked by host (some platforms block SMTP), or remote SMTP server is unreachable.');
+    }
     // don't throw — allow the signup flow to continue for local dev, but surface the error
-    return Promise.resolve({ error: true, details: err.message });
+    return Promise.resolve({ error: true, details: err.message, code: err.code });
   }
 };
