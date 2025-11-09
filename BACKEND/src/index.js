@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { connectDB } from "./lib/db.js";
 
 import authRoutes from "./routes/auth.route.js";
@@ -52,11 +53,17 @@ app.use('/api/health', healthRoutes);
 try { startAnalyticsCron(); } catch (err) { console.debug('analytics cron not started', err); }
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../FRONTEND/dist")));
+  const frontDist = path.join(__dirname, "../FRONTEND/dist");
+  const frontIndex = path.join(frontDist, "index.html");
+  if (fs.existsSync(frontIndex)) {
+    app.use(express.static(frontDist));
 
-  app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.join(__dirname, "../FRONTEND", "dist", "index.html"));
-  });
+    app.get(/(.*)/, (req, res) => {
+      res.sendFile(frontIndex);
+    });
+  } else {
+    console.warn(`FRONTEND build not found at ${frontIndex} — skipping static file serving. If you expect the frontend to be served by this service, build the frontend before start or deploy the frontend separately (Netlify).`);
+  }
 }
 
 server.listen(PORT, () => {
