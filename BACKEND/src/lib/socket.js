@@ -14,12 +14,18 @@ console.log("Socket allowed origins:", allowedOrigins);
 const io = new Server(server, {
     cors: {
         origin: function (origin, callback) {
-            // allow non-browser or same-origin
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.length === 0) return callback(null, true);
-            if (allowedOrigins.includes(origin)) return callback(null, true);
-            return callback(new Error('CORS error: origin not allowed'), false);
-        },
+                // allow non-browser or same-origin
+                if (!origin) return callback(null, true);
+                if (allowedOrigins.length === 0) return callback(null, true);
+                if (allowedOrigins.includes(origin)) return callback(null, true);
+                // allow Netlify preview subdomains
+                try {
+                    const originHost = new URL(origin).hostname;
+                    if (originHost && originHost.endsWith('.netlify.app')) return callback(null, true);
+                } catch (e) {}
+                console.warn(`Socket CORS blocked origin: ${origin}`);
+                return callback(null, false);
+            },
         methods: ["GET", "POST"],
         credentials: true,
     },

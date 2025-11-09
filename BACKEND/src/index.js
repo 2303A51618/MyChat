@@ -42,8 +42,16 @@ app.use(
       if (!origin) return callback(null, true);
       if (allowedOrigins.length === 0) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      // not allowed
-      return callback(new Error("CORS: origin not allowed"), false);
+      // allow Netlify preview and subdomains (*.netlify.app)
+      try {
+        const originHost = new URL(origin).hostname;
+        if (originHost && originHost.endsWith('.netlify.app')) return callback(null, true);
+      } catch (e) {
+        // ignore parse errors
+      }
+      // not allowed — do not throw an error (avoid 500), respond with CORS false
+      console.warn(`CORS blocked origin: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
   })
