@@ -6,9 +6,16 @@ import User from "../models/user.model.js";
 const app = express();
 const server = http.createServer(app);
 
+// Allow origins configured via FRONTEND_URL (comma-separated) or default to localhost during dev
+const allowedOrigins = (() => {
+    const cfg = process.env.FRONTEND_URL || "http://localhost:5173";
+    if (cfg.includes(",")) return cfg.split(",").map(s => s.trim());
+    return cfg;
+})();
+
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:5173"],
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true,
     },
