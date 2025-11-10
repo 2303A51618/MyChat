@@ -5,6 +5,7 @@ import { useChatStore } from "../Store/useChatStore";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import AddFriendModal from './AddFriendModal';
+import avatarFor from '../lib/avatar';
 
 
 const MiddleContainer = ({isLogout, setIsLogout}) => {
@@ -118,7 +119,7 @@ useEffect(() => {
   return (
     <>
     {/* Middle container */}
-  <div className="sticky top-0 h-screen overflow-y-scroll pb-[200px] w-screen xl:w-[430px] bg-white border border-l-0 border-r-gray-100 border-y-0 section-card">
+  <div className="sticky top-0 h-screen overflow-y-scroll pb-[200px] w-screen xl:w-[430px] md:ml-[80px] bg-white border border-l-0 border-r-gray-100 border-y-0 section-card">
     {/* Upper container */}
     <div className="sticky top-0 bg-white border border-x-0 border-t-0 border-b-gray-100 pt-4 pb-[5px] px-3">
     
@@ -292,10 +293,10 @@ useEffect(() => {
             <div >
               
                  <img
-                 src={user.profilePhoto || "/avatar.png"}
-                 alt={user.name}
-                  className="w-[60px] h-[50px] rounded-full"
-                                />
+                   src={avatarFor(user)}
+                   alt={user.fullName || user.name || 'user avatar'}
+                   className="w-[60px] h-[50px] rounded-full"
+                 />
 
             </div>
             {/* Right card box */}
@@ -366,10 +367,10 @@ useEffect(() => {
             <div >
               
                  <img
-                 src={user.profilePhoto || "/avatar.png"}
-                 alt={user.name}
-                  className="w-[60px] h-[50px] rounded-full"
-                                />
+                   src={avatarFor(user)}
+                   alt={user.fullName || user.name || 'user avatar'}
+                   className="w-[60px] h-[50px] rounded-full"
+                 />
 
             </div>
             {/* Right card box */}

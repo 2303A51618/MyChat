@@ -154,7 +154,7 @@ const MessageInput = () => {
                 <input onChange={(e) => setText(e.target.value)}
                   type="text"
                   value={text}
-                  className="h-[55px] pl-[95px] pr-[50px] border w-[925px] rounded-full bg-white text-black"
+                  className="h-[55px] pl-[100px] pr-[50px] border w-[925px] rounded-full bg-white text-black"
                   placeholder={"Type a message"}
                 />
                 </div>

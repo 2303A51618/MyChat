@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAuthStore } from '../Store/useAuthStore';
+import avatarFor from '../lib/avatar';
 
 const StatusPage = () => {
   const { friends, fetchFriends, onlineUsers } = useAuthStore();
@@ -16,7 +17,7 @@ const StatusPage = () => {
         {(friends || []).map(f => (
           <div key={f._id} className="p-3 border rounded flex items-center justify-between section-card">
             <div className="flex items-center gap-3">
-              <img src={f.profilePhoto || '/avatar.png'} className="w-10 h-10 rounded-full" alt="" />
+              <img src={avatarFor(f)} className="w-10 h-10 rounded-full" alt="" />
               <div>
                 <div className="font-medium">{f.fullName || f.username}</div>
                 <div className="text-xs text-gray-500">{f.email || ''}</div>

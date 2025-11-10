@@ -6,6 +6,16 @@ import { compressBase64Image } from '../lib/imageUtils.js';
 import { sendOtpEmail } from "../lib/mailer.js";
 import crypto from 'crypto';
 
+// Clear expired OTPs stored in users collection.
+// This avoids keeping stale OTPs in memory and ensures OTP fields are removed after expiry.
+const clearExpiredOtps = async () => {
+  try {
+    await User.updateMany({ otpExpires: { $lte: Date.now() } }, { $set: { otp: '', otpExpires: null } });
+  } catch (err) {
+    console.error('clearExpiredOtps error', err.message);
+  }
+};
+
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
   try {
@@ -31,10 +41,14 @@ export const signup = async (req, res) => {
       isVerified: false,
     });
 
-    // generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    newUser.otp = otp;
-    newUser.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  // clear any expired otps globally (best-effort)
+  await clearExpiredOtps();
+
+  // generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  newUser.otp = otp;
+  // OTP valid for 15 minutes
+  newUser.otpExpires = Date.now() + 15 * 60 * 1000;
 
     await newUser.save();
 
@@ -54,6 +68,8 @@ export const signup = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
+    // clear expired otps before verification
+    await clearExpiredOtps();
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: 'Email and otp are required' });
 
@@ -80,6 +96,8 @@ export const verifyOtp = async (req, res) => {
 
 export const resendOtp = async (req, res) => {
   try {
+    // clear expired otps before resending
+    await clearExpiredOtps();
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email required' });
     const user = await User.findOne({ email });

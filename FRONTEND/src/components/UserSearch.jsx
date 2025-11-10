@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import avatarFor from "../lib/avatar";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "../Store/useAuthStore";
 import { useChatStore } from "../Store/useChatStore";
@@ -48,7 +49,7 @@ const UserSearch = () => {
           {results.map(u => (
             <li key={u._id} className="flex items-center justify-between p-2 border rounded">
               <div className="flex items-center gap-3">
-                <img src={u.profilePhoto||'/avatar.png'} className="w-10 h-10 rounded-full" alt="" />
+                <img src={avatarFor(u)} className="w-10 h-10 rounded-full" alt="" />
                 <div>
                   <div className="font-semibold">{u.username || u.fullName}</div>
                   <div className="text-xs text-gray-500">{u.email}</div>

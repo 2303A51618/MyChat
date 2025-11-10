@@ -13,8 +13,12 @@ export const getUsersForSidebar = async (req, res) => {
     const currentUser = await User.findById(loggedInUserId);
     const deletedChats = currentUser?.deletedChats || [];
 
+    // Only return real users: those with an email, a password and verified via OTP
     const users = await User.find({
       _id: { $ne: loggedInUserId, $nin: deletedChats },
+      email: { $exists: true, $ne: "" },
+      password: { $exists: true, $ne: "" },
+      isVerified: true,
     }).select("-password");
 
     res.status(200).json(users);
